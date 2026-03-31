@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Buy Stock – Stock Trading System{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+
+        <h5 class="mb-1">Buy Stock</h5>
+        <p class="text-muted small mb-1">Purchase shares at the current market price.</p>
+        <p class="mb-4">
+            Available funds:
+            <strong>${{ "%.2f"|format(current_user.availableFunds) }}</strong>
+        </p>
+
+        {% if error %}
+            <div class="alert alert-danger py-2">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        {% if stocks %}
+            <form method="POST" action="{{ url_for('buy') }}">
+
+                <div class="mb-3">
+                    <label for="stock_id" class="form-label">Stock</label>
+                    <select class="form-select" id="stock_id" name="stock_id" required>
+                        <option value="" disabled selected>Select a stock…</option>
+
+                        {% for s in stocks %}
+                            <option
+                                value="{{ s.id }}"
+                                data-price="{{ s.currentMarketPrice }}"
+                                data-qty="{{ s.quantity }}"
+                                {% if request.form.get('stock_id') == s.id|string %}selected{% endif %}
+                            >
+                                {{ s.ticker }} – {{ s.companyName }} (${{ "%.2f"|format(s.currentMarketPrice) }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="quantity" class="form-label">Quantity</label>
+                    <input
+                        type="number"
+                        class="form-control"
+                        id="quantity"
+                        name="quantity"
+                        min="1"
+                        step="1"
+                        placeholder="0"
+                        value="{{ request.form.get('quantity', '') }}"
+                        style="max-width: 200px;"
+                        required
+                    >
+                    <div class="form-text" id="availableHint"></div>
+                </div>
+
+                <div class="p-3 border rounded bg-white mb-4" style="max-width: 300px;">
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>Price per share</span>
+                        <span id="priceDisplay">—</span>
+                    </div>
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>Available quantity</span>
+                        <span id="qtyDisplay">—</span>
+                    </div>
+                    <div class="d-flex justify-content-between fw-bold">
+                        <span>Estimated total</span>
+                        <span id="totalDisplay">—</span>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-success">Buy</button>
+                    <a href="{{ url_for('home') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+
+            </form>
+        {% else %}
+            <div class="p-3 border rounded bg-white">
+                <p class="mb-0 text-muted">No stocks available to buy yet.</p>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const stockSel = document.getElementById('stock_id');
+    const qtyInput = document.getElementById('quantity');
+    const priceEl = document.getElementById('priceDisplay');
+    const qtyEl = document.getElementById('qtyDisplay');
+    const totalEl = document.getElementById('totalDisplay');
+    const availHint = document.getElementById('availableHint');
+
+    function update() {
+        const opt = stockSel.options[stockSel.selectedIndex];
+        const price = parseFloat(opt?.dataset?.price) || 0;
+        const avail = parseInt(opt?.dataset?.qty) || 0;
+        const qty = parseInt(qtyInput.value) || 0;
+
+        priceEl.textContent = price ? '$' + price.toFixed(2) : '—';
+        qtyEl.textContent = avail ? avail + ' shares' : '—';
+        totalEl.textContent = (price && qty) ? '$' + (price * qty).toFixed(2) : '—';
+        availHint.textContent = avail ? 'Available: ' + avail + ' shares.' : '';
+
+        if (avail) {
+            qtyInput.max = avail;
+        }
+    }
+
+    stockSel.addEventListener('change', update);
+    qtyInput.addEventListener('input', update);
+
+    update();
+</script>
+{% endblock %}
