@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home – Stock Trading System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-light bg-white border-bottom px-4">
+    <span class="navbar-brand fw-bold">Stock Trading System</span>
+    <div class="d-flex gap-1">
+        {% if current_user.role == "admin" %}
+            <a href="{{ url_for('home') }}" class="btn btn-sm btn-outline-secondary">Dashboard</a>
+            <a href="#" class="btn btn-sm btn-outline-secondary">Manage Stocks</a>
+            <a href="#" class="btn btn-sm btn-outline-secondary">Market Hours</a>
+            <a href="#" class="btn btn-sm btn-outline-secondary">Exceptions / Holidays</a>
+        {% else %}
+            <a href="{{ url_for('home') }}" class="btn btn-sm btn-outline-secondary">Dashboard</a>
+            <a href="#" class="btn btn-sm btn-outline-secondary">Portfolio</a>
+            <a href="#" class="btn btn-sm btn-outline-secondary">Buy</a>
+            <a href="#" class="btn btn-sm btn-outline-secondary">Sell</a>
+            <a href="#" class="btn btn-sm btn-outline-secondary">Deposit</a>
+            <a href="#" class="btn btn-sm btn-outline-secondary">History</a>
+        {% endif %}
+        <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline-danger">Logout</a>
+    </div>
+</nav>
+
+<div class="container mt-4" style="max-width: 800px;">
+    <div class="card shadow-sm">
+        <div class="card-body p-4">
+
+            <h5 class="mb-1">
+                Welcome, {{ current_user.username }}!
+                {% if current_user.role == "admin" %}
+                    <span class="badge bg-warning text-dark ms-2">admin</span>
+                {% else %}
+                    <span class="badge bg-info text-dark ms-2">user</span>
+                {% endif %}
+            </h5>
+
+            {% if current_user.role == "admin" %}
+                <h6 class="mt-4 mb-2">Admin Dashboard</h6>
+                <div class="p-3 border rounded bg-white">
+                    <p class="mb-1">This is visible only to admins.</p>
+                    <p class="text-muted small mb-0">Use the navigation above to manage stocks, configure market hours, and define exceptions/holidays.</p>
+                </div>
+
+            {% elif current_user.role == "user" %}
+                <h6 class="mt-4 mb-2">User Dashboard</h6>
+                <div class="p-3 border rounded bg-white">
+                    <p class="mb-1">This is visible only to regular users.</p>
+                    <p class="text-muted small mb-0">Use the navigation above to buy stock, sell stock, deposit funds, and view your portfolio.</p>
+                </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
