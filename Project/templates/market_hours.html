@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}Market Hours – Stock Trading System{% endblock %}
+
+{% block content %}
+{% set first_day = working_days.values()|list|first if working_days else None %}
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+
+        <h5 class="mb-1">Market Hours</h5>
+        <p class="text-muted small mb-4">Set the days and times when trading is open.</p>
+
+        {% if error %}
+            <div class="alert alert-danger py-2">{{ error }}</div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('market_hours') }}">
+
+            <div class="row g-3 mb-4">
+                <div class="col-sm-4">
+                    <label for="startTime" class="form-label">Open Time</label>
+                    <input type="time" class="form-control" id="startTime" name="startTime"
+                           value="{{ first_day.startTime.strftime('%H:%M') if first_day else '09:30' }}"
+                           required>
+                </div>
+                <div class="col-sm-4">
+                    <label for="endTime" class="form-label">Close Time</label>
+                    <input type="time" class="form-control" id="endTime" name="endTime"
+                           value="{{ first_day.endTime.strftime('%H:%M') if firstday else '16:00' }}"
+                           required>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label">Trading Days</label>
+                <div class="d-flex flex-wrap gap-3">
+                    {% for day in days %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox"
+                                   id="day{{ day }}" name="days" value="{{ day }}"
+                                   {% if day in workingdays %}checked{% endif %}>
+                            <label class="form-check-label" for="day{{ day }}">{{ day }}</label>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save Market Hours</button>
+        </form>
+
+    </div>
+</div>
+{% endblock %}
