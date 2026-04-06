@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Exceptions / Holidays – Stock Trading System{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <h5 class="mb-0">Exceptions / Holidays</h5>
+            <button class="btn btn-sm btn-primary" onclick="toggleForm()">+ Add Exception</button>
+        </div>
+        <p class="text-muted small mb-4">Define dates when the market is closed.</p>
+
+        {% if error %}
+            <div class="alert alert-danger py-2">{{ error }}</div>
+        {% endif %}
+
+        <div id="exForm" class="p-3 border rounded bg-white mb-4" style="display: none;">
+            <h6 class="mb-3">Add Exception</h6>
+            <form method="POST" action="{{ url_for('exceptions') }}">
+                <input type="hidden" name="action" value="add">
+                <div class="row g-3 mb-3">
+                    <div class="col-sm-4">
+                        <label class="form-label">Date <span class="text-danger"></span></label>
+                        <input type="date" class="form-control form-control-sm" name="holidayDate" required>
+                    </div>
+                    <div class="col-sm-8">
+                        <label class="form-label">Reason <span class="text-danger"></span></label>
+                        <input type="text" class="form-control form-control-sm" name="reason"
+                               placeholder="e.g. Christmas Day" required>
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="toggleForm()">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        {% if exceptions %}
+            <table class="table table-bordered table-hover table-sm align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date</th>
+                        <th>Reason</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for e in exceptions %}
+                    <tr>
+                        <td class="text-muted small">{{ e.holidayDate.strftime('%b %d, %Y') }}</td>
+                        <td>{{ e.reason }}</td>
+                        <td>
+                            <form method="POST" action="{{ url_for('exceptions') }}"
+                                  onsubmit="return confirm('Remove this exception?')">
+                                <input type="hidden" name="action"       value="delete">
+                                <input type="hidden" name="exception_id" value="{{ e.id }}">
+                                <button type="submit" class="btn btn-sm btn-outline-danger">Remove</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="p-3 border rounded bg-white">
+                <p class="mb-0 text-muted">No exceptions defined yet.</p>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleForm() {
+        const form = document.getElementById('exForm');
+        form.style.display = form.style.display === 'none' ? 'block' : 'none';
+    }
+</script>
+{% endblock %}
