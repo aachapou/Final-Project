@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}History – Stock Trading System{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+
+        <h5 class="mb-1">Order History</h5>
+        <p class="text-muted small mb-4">All your past trades and deposits.</p>
+
+        {% if orders %}
+            <table class="table table-bordered table-hover table-sm align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Date / Time</th>
+                        <th>Type</th>
+                        <th>Ticker</th>
+                        <th>Quantity</th>
+                        <th>Price</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for o in orders %}
+                    <tr>
+                        <td class="text-muted small">{{ o.createdAt.strftime('%b %d, %Y  %H:%M') }}</td>
+                        <td>
+                            {% if o.type == 'buy' %}
+                                <span class="badge bg-success">BUY</span>
+                            {% elif o.type == 'sell' %}
+                                <span class="badge bg-danger">SELL</span>
+                            {% else %}
+                                <span class="badge bg-primary">DEPOSIT</span>
+                            {% endif %}
+                        </td>
+                        <td class="fw-bold">{{ o.stock.ticker if o.stock else '—' }}</td>
+                        <td>{{ o.quantity if o.quantity else '—' }}</td>
+                        <td>{{ '$' + "%.2f"|format(o.price) if o.price else '—' }}</td>
+                        <td class="fw-bold">${{ "%.2f"|format(o.totalValue) }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div class="p-3 border rounded bg-white">
+                <p class="mb-1">No orders yet.</p>
+                <p class="text-muted small mb-0"><a href="{{ url_for('buy') }}">Make your first trade →</a></p>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
