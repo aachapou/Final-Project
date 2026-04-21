@@ -1,0 +1,316 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Stocks – Stock Trading System{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <h5 class="mb-0">Manage Stocks</h5>
+            <button class="btn btn-sm btn-primary" onclick="toggleForm()">+ Add Stock</button>
+        </div>
+
+        <p class="text-muted small mb-4">
+            Add, edit, or remove stocks on the exchange.
+        </p>
+
+        {% if error %}
+            <div class="alert alert-danger py-2">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <div id="stockForm" class="p-3 border rounded bg-white mb-4" style="display: none;">
+            <h6 class="mb-3" id="formTitle">Add New Stock</h6>
+
+            <form method="POST" action="{{ url_for('manage_stocks') }}">
+                <input type="hidden" name="action" id="formAction" value="add">
+                <input type="hidden" name="stock_id" id="formStockId" value="">
+
+                <div class="row g-3 mb-3">
+
+                    <div class="col-sm-3">
+                        <label class="form-label">
+                            Ticker <span class="text-danger">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            class="form-control form-control-sm"
+                            name="ticker"
+                            id="formTicker"
+                            placeholder="e.g. AAPL"
+                            maxlength="10"
+                            style="text-transform:uppercase"
+                            required
+                        >
+                    </div>
+
+                    <div class="col-sm-4">
+                        <label class="form-label">
+                            Company Name <span class="text-danger">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            class="form-control form-control-sm"
+                            name="companyName"
+                            id="formCompany"
+                            placeholder="e.g. Apple Inc."
+                            required
+                        >
+                    </div>
+
+                    <div class="col-sm-2">
+                        <label class="form-label">
+                            Price (USD) <span class="text-danger">*</span>
+                        </label>
+                        <input
+                            type="number"
+                            class="form-control form-control-sm"
+                            name="currentMarketPrice"
+                            id="formPrice"
+                            placeholder="0.00"
+                            min="0.01"
+                            step="0.01"
+                            required
+                        >
+                    </div>
+
+                    <div class="col-sm-3">
+                        <label class="form-label">
+                            Quantity <span class="text-danger">*</span>
+                        </label>
+                        <input
+                            type="number"
+                            class="form-control form-control-sm"
+                            name="quantity"
+                            id="formQty"
+                            placeholder="0"
+                            min="1"
+                            step="1"
+                            required
+                        >
+                    </div>
+
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="toggleForm()">Cancel</button>
+                </div>
+... (111 lines left)
+
+manage_stocks.html
+9 KB
+﻿
+{% extends "base.html" %}
+
+{% block title %}Manage Stocks – Stock Trading System{% endblock %}
+
+{% block content %}
+<div class="card shadow-sm">
+    <div class="card-body p-4">
+
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <h5 class="mb-0">Manage Stocks</h5>
+            <button class="btn btn-sm btn-primary" onclick="toggleForm()">+ Add Stock</button>
+        </div>
+
+        <p class="text-muted small mb-4">
+            Add, edit, or remove stocks on the exchange.
+        </p>
+
+        {% if error %}
+            <div class="alert alert-danger py-2">
+                {{ error }}
+            </div>
+        {% endif %}
+
+        <div id="stockForm" class="p-3 border rounded bg-white mb-4" style="display: none;">
+            <h6 class="mb-3" id="formTitle">Add New Stock</h6>
+
+            <form method="POST" action="{{ url_for('manage_stocks') }}">
+                <input type="hidden" name="action" id="formAction" value="add">
+                <input type="hidden" name="stock_id" id="formStockId" value="">
+
+                <div class="row g-3 mb-3">
+
+                    <div class="col-sm-3">
+                        <label class="form-label">
+                            Ticker <span class="text-danger">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            class="form-control form-control-sm"
+                            name="ticker"
+                            id="formTicker"
+                            placeholder="e.g. AAPL"
+                            maxlength="10"
+                            style="text-transform:uppercase"
+                            required
+                        >
+                    </div>
+
+                    <div class="col-sm-4">
+                        <label class="form-label">
+                            Company Name <span class="text-danger">*</span>
+                        </label>
+                        <input
+                            type="text"
+                            class="form-control form-control-sm"
+                            name="companyName"
+                            id="formCompany"
+                            placeholder="e.g. Apple Inc."
+                            required
+                        >
+                    </div>
+
+                    <div class="col-sm-2">
+                        <label class="form-label">
+                            Price (USD) <span class="text-danger">*</span>
+                        </label>
+                        <input
+                            type="number"
+                            class="form-control form-control-sm"
+                            name="currentMarketPrice"
+                            id="formPrice"
+                            placeholder="0.00"
+                            min="0.01"
+                            step="0.01"
+                            required
+                        >
+                    </div>
+
+                    <div class="col-sm-3">
+                        <label class="form-label">
+                            Quantity <span class="text-danger">*</span>
+                        </label>
+                        <input
+                            type="number"
+                            class="form-control form-control-sm"
+                            name="quantity"
+                            id="formQty"
+                            placeholder="0"
+                            min="1"
+                            step="1"
+                            required
+                        >
+                    </div>
+
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-sm btn-primary">Save</button>
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="toggleForm()">Cancel</button>
+                </div>
+            </form>
+        </div>
+
+        {% if stocks %}
+            <table class="table table-bordered table-hover table-sm align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Company</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for s in stocks %}
+                        <tr>
+                            <td class="fw-bold">{{ s.ticker }}</td>
+                            <td>{{ s.companyName }}</td>
+                            <td>${{ "%.2f"|format(s.currentMarketPrice) }}</td>
+                            <td>{{ s.quantity }}</td>
+
+                            <td>
+                                <div class="d-flex gap-1">
+
+                                    <button
+                                        class="btn btn-sm btn-outline-secondary"
+                                        onclick="editStock('{{ s.id }}','{{ s.ticker }}','{{ s.companyName }}','{{ s.currentMarketPrice }}','{{ s.quantity }}')"
+                                    >
+                                        Edit
+                                    </button>
+
+                                    <form
+                                        method="POST"
+                                        action="{{ url_for('manage_stocks') }}"
+                                        onsubmit="return confirm('Delete {{ s.ticker }}?')"
+                                    >
+                                        <input type="hidden" name="action" value="delete">
+                                        <input type="hidden" name="stock_id" value="{{ s.id }}">
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                                            Delete
+                                        </button>
+                                    </form>
+
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+        {% else %}
+            <div class="p-3 border rounded bg-white">
+                <p class="mb-0 text-muted">
+                    No stocks yet. Click <strong>+ Add Stock</strong> to get started.
+                </p>
+            </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function toggleForm(show) {
+        const form = document.getElementById('stockForm');
+
+        form.style.display = (show !== undefined
+            ? show
+            : form.style.display === 'none')
+            ? 'block'
+            : 'none';
+
+        if (form.style.display === 'none') {
+            resetForm();
+        }
+    }
+
+    function resetForm() {
+        document.getElementById('formTitle').textContent = 'Add New Stock';
+        document.getElementById('formAction').value = 'add';
+        document.getElementById('formStockId').value = '';
+        document.getElementById('formTicker').value = '';
+        document.getElementById('formCompany').value = '';
+        document.getElementById('formPrice').value = '';
+        document.getElementById('formQty').value = '';
+        document.getElementById('formTicker').disabled = false;
+    }
+
+    function editStock(id, ticker, company, price, qty) {
+        toggleForm(true);
+
+        document.getElementById('formTitle').textContent = 'Edit Stock';
+        document.getElementById('formAction').value = 'edit';
+        document.getElementById('formStockId').value = id;
+
+        document.getElementById('formTicker').value = ticker;
+        document.getElementById('formTicker').disabled = true;
+
+        document.getElementById('formCompany').value = company;
+        document.getElementById('formPrice').value = price;
+        document.getElementById('formQty').value = qty;
+
+        document.getElementById('stockForm').scrollIntoView({
+            behavior: 'smooth'
+        });
+    }
+</script>
+{% endblock %}
