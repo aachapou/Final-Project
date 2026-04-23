@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+
 {% block title %}Sell Stock – Stock Trading System{% endblock %}
 
 {% block content %}
@@ -6,99 +7,84 @@
     <div class="card-body p-4">
 
         <h5 class="mb-1">Sell Stock</h5>
-        <p class="text-muted small mb-1">Sell shares from your portfolio at the current market price.</p>
-        <p class="mb-4">Available funds: <strong>${{ "%.2f"|format(current_user.availableFunds) }}</strong></p>
+        <p class="text-muted small mb-1">
+            Sell shares from your portfolio at the current market price.
+        </p>
+        <p class="mb-4">
+            Available funds:
+            <strong>${{ "%.2f"|format(current_user.availableFunds) }}</strong>
+        </p>
 
         {% if error %}
-            <div class="alert alert-danger py-2">{{ error }}</div>
+            <div class="alert alert-danger py-2">
+                {{ error }}
+            </div>
         {% endif %}
 
         {% if holdings %}
-        <form method="POST" action="{{ url_for('sell') }}" id="sellForm">
-            <div class="mb-3">
-                <label for="portfolio_id" class="form-label">Stock to Sell</label>
-                <select class="form-select" id="portfolio_id" name="portfolio_id" required>
-                    <option value="" disabled selected>Select a holding…</option>
-                    {% for h in holdings %}
-                        <option value="{{ h.id }}"
+            <form method="POST" action="{{ url_for('sell') }}">
+
+                <div class="mb-3">
+                    <label for="portfolio_id" class="form-label">Stock to Sell</label>
+                    <select class="form-select" id="portfolio_id" name="portfolio_id" required>
+                        <option value="" disabled selected>Select a holding…</option>
+
+                        {% for h in holdings %}
+                            <option
+                                value="{{ h.id }}"
                                 data-price="{{ h.stock.currentMarketPrice }}"
                                 data-max="{{ h.quantity }}"
-                                data-ticker="{{ h.stock.ticker }}"
-                                {% if request.form.get('portfolio_id') == h.id|string %}selected{% endif %}>
-                            {{ h.stock.ticker }} – {{ h.quantity }} shares @ ${{ "%.2f"|format(h.stock.currentMarketPrice) }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="quantity" class="form-label">Quantity</label>
-                <input type="number" class="form-control" id="quantity" name="quantity"
-                       min="1" step="1" placeholder="0"
-                       value="{{ request.form.get('quantity', '') }}"
-                       style="max-width: 200px;" required>
-                <div class="form-text" id="maxHint"></div>
-            </div>
-
-            <div class="p-3 border rounded bg-white mb-4" style="max-width: 300px;">
-                <div class="d-flex justify-content-between small text-muted mb-1">
-                    <span>Price per share</span>
-                    <span id="priceDisplay">—</span>
+                                {% if request.form.get('portfolio_id') == h.id|string %}selected{% endif %}
+                            >
+                                {{ h.stock.ticker }} – {{ h.quantity }} shares @ ${{ "%.2f"|format(h.stock.currentMarketPrice) }}
+                            </option>
+                        {% endfor %}
+                    </select>
                 </div>
-                <div class="d-flex justify-content-between fw-bold">
-                    <span>Estimated proceeds</span>
-                    <span id="totalDisplay">—</span>
-                </div>
-            </div>
 
-            <div class="d-flex gap-2">
-                <button type="button" class="btn btn-danger" onclick="showConfirm()">Sell</button>
-                <a href="{{ url_for('portfolio') }}" class="btn btn-secondary">Cancel</a>
-            </div>
-        </form>
+                <div class="mb-3">
+                    <label for="quantity" class="form-label">Quantity</label>
+                    <input
+                        type="number"
+                        class="form-control"
+                        id="quantity"
+                        name="quantity"
+                        min="1"
+                        step="1"
+                        placeholder="0"
+                        value="{{ request.form.get('quantity', '') }}"
+                        style="max-width: 200px;"
+                        required
+                    >
+                    <div class="form-text" id="maxHint"></div>
+                </div>
+
+                <div class="p-3 border rounded bg-white mb-4" style="max-width: 300px;">
+                    <div class="d-flex justify-content-between small text-muted mb-1">
+                        <span>Price per share</span>
+                        <span id="priceDisplay">—</span>
+                    </div>
+                    <div class="d-flex justify-content-between fw-bold">
+                        <span>Estimated proceeds</span>
+                        <span id="totalDisplay">—</span>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-danger">Sell</button>
+                    <a href="{{ url_for('portfolio') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+
+            </form>
         {% else %}
             <div class="p-3 border rounded bg-white">
                 <p class="mb-1">You have no holdings to sell.</p>
-                <p class="text-muted small mb-0"><a href="{{ url_for('buy') }}">Buy stock first →</a></p>
+                <p class="text-muted small mb-0">
+                    <a href="{{ url_for('buy') }}">Buy stock first →</a>
+                </p>
             </div>
         {% endif %}
 
-    </div>
-</div>
-
-<div class="modal fade" id="confirmModal" tabindex="-1">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Confirm Sale</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p class="mb-1">Are you sure you want to sell:</p>
-                <div class="p-3 border rounded bg-light mt-2">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted">Stock</span>
-                        <strong id="confirmTicker">—</strong>
-                    </div>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted">Quantity</span>
-                        <strong id="confirmQty">—</strong>
-                    </div>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span class="text-muted">Price per share</span>
-                        <strong id="confirmPrice">—</strong>
-                    </div>
-                    <div class="d-flex justify-content-between">
-                        <span class="text-muted">Total proceeds</span>
-                        <strong id="confirmTotal">—</strong>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Go Back</button>
-                <button type="button" class="btn btn-danger" onclick="document.getElementById('sellForm').submit()">Confirm Sell</button>
-            </div>
-        </div>
     </div>
 </div>
 {% endblock %}
@@ -106,45 +92,29 @@
 {% block scripts %}
 <script>
     const holdingSel = document.getElementById('portfolio_id');
-    const qtyInput   = document.getElementById('quantity');
-    const priceEl    = document.getElementById('priceDisplay');
-    const totalEl    = document.getElementById('totalDisplay');
-    const hintEl     = document.getElementById('maxHint');
+    const qtyInput = document.getElementById('quantity');
+    const priceEl = document.getElementById('priceDisplay');
+    const totalEl = document.getElementById('totalDisplay');
+    const hintEl = document.getElementById('maxHint');
 
     function update() {
-        const opt   = holdingSel.options[holdingSel.selectedIndex];
+        const opt = holdingSel.options[holdingSel.selectedIndex];
         const price = parseFloat(opt?.dataset?.price) || 0;
-        const max   = parseInt(opt?.dataset?.max)      || 0;
-        const qty   = parseInt(qtyInput.value)         || 0;
+        const max = parseInt(opt?.dataset?.max) || 0;
+        const qty = parseInt(qtyInput.value) || 0;
 
-        priceEl.textContent = price        ? '$' + price.toFixed(2)         : '—';
-        totalEl.textContent = price && qty ? '$' + (price * qty).toFixed(2) : '—';
-        hintEl.textContent  = max          ? 'You own ' + max + ' shares.'  : '';
+        priceEl.textContent = price ? '$' + price.toFixed(2) : '—';
+        totalEl.textContent = (price && qty) ? '$' + (price * qty).toFixed(2) : '—';
+        hintEl.textContent = max ? 'You own ' + max + ' shares.' : '';
 
-        if (max) qtyInput.max = max;
-    }
-
-    function showConfirm() {
-        const opt    = holdingSel.options[holdingSel.selectedIndex];
-        const price  = parseFloat(opt?.dataset?.price) || 0;
-        const ticker = opt?.dataset?.ticker || '';
-        const qty    = parseInt(qtyInput.value) || 0;
-
-        if (!ticker || qty <= 0) {
-            alert('Please select a stock and enter a quantity.');
-            return;
+        if (max) {
+            qtyInput.max = max;
         }
-
-        document.getElementById('confirmTicker').textContent = ticker;
-        document.getElementById('confirmQty').textContent    = qty + ' shares';
-        document.getElementById('confirmPrice').textContent  = '$' + price.toFixed(2);
-        document.getElementById('confirmTotal').textContent  = '$' + (price * qty).toFixed(2);
-
-        new bootstrap.Modal(document.getElementById('confirmModal')).show();
     }
 
     holdingSel.addEventListener('change', update);
     qtyInput.addEventListener('input', update);
+
     update();
 </script>
 {% endblock %}

@@ -16,19 +16,27 @@
                         <th>Ticker</th>
                         <th>Company</th>
                         <th>Shares</th>
+                        <th>Avg Cost</th>
                         <th>Current Price</th>
                         <th>Market Value</th>
+                        <th>P&amp;L</th>
                         <th></th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for h in holdings %}
+                    {% set market_value = h.stock.currentMarketPrice * h.quantity %}
+                    {% set pnl = (h.stock.currentMarketPrice - h.avgCost) * h.quantity %}
                     <tr>
                         <td class="fw-bold">{{ h.stock.ticker }}</td>
                         <td>{{ h.stock.companyName }}</td>
                         <td>{{ h.quantity }}</td>
+                        <td>${{ "%.2f"|format(h.avgCost) }}</td>
                         <td>${{ "%.2f"|format(h.stock.currentMarketPrice) }}</td>
-                        <td>${{ "%.2f"|format(h.stock.currentMarketPrice * h.quantity) }}</td>
+                        <td>${{ "%.2f"|format(market_value) }}</td>
+                        <td class="{{ 'text-success' if pnl >= 0 else 'text-danger' }}">
+                            {{ '+' if pnl >= 0 else '' }}${{ "%.2f"|format(pnl) }}
+                        </td>
                         <td>
                             <a href="{{ url_for('sell') }}" class="btn btn-sm btn-outline-danger">Sell</a>
                         </td>
@@ -46,3 +54,4 @@
     </div>
 </div>
 {% endblock %}
+portfolio.html
