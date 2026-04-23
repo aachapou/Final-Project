@@ -380,6 +380,23 @@ def sell():
         .filter(Portfolio.quantity > 0)
         .all()
 
+@app.route('/cancel_order/<int:order_id>', methods=['POST'])
+@login_required
+def cancel_order(order_id):
+    order = OrderHistory.query.get(order_id)
+
+    if not order or order.customerId != current_user.id:
+        flash('Order not found.', 'danger')
+        return redirect(url_for('history'))
+
+    if order.status != 'pending':
+        flash('Only pending orders can be cancelled.', 'danger')
+        return redirect(url_for('history'))
+
+    order.status = 'cancelled'
+    db.session.commit()
+    flash('Order cancelled successfully.', 'success')
+    return redirect(url_for('history'))
 
 if __name__ == "__main__":
     app.run(debug=True)
