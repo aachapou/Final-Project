@@ -240,6 +240,17 @@ def portfolio():
         portfolio_value=round(portfolio_value, 2)
     )
 
+@app.route('/history')
+@login_required
+def history():
+    orders = (
+        OrderHistory.query
+        .filter_by(customerId=current_user.id)
+        .order_by(OrderHistory.createdAt.desc())
+        .all()
+    )
+    return render_template('history.html', orders=orders)
+
 @app.route('/deposit', methods=['GET', 'POST'])
 @login_required
 def deposit():
