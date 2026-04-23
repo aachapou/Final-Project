@@ -6,7 +6,7 @@
     <div class="card-body p-4">
 
         <h5 class="mb-1">Order History</h5>
-        <p class="text-muted small mb-4">All your past trades and deposits.</p>
+        <p class="text-muted small mb-4">All your past trades, deposits, and withdrawals.</p>
 
         {% if orders %}
             <table class="table table-bordered table-hover table-sm align-middle">
@@ -18,6 +18,8 @@
                         <th>Quantity</th>
                         <th>Price</th>
                         <th>Total</th>
+                        <th>Status</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -29,14 +31,33 @@
                                 <span class="badge bg-success">BUY</span>
                             {% elif o.type == 'sell' %}
                                 <span class="badge bg-danger">SELL</span>
-                            {% else %}
+                            {% elif o.type == 'deposit' %}
                                 <span class="badge bg-primary">DEPOSIT</span>
+                            {% elif o.type == 'withdraw' %}
+                                <span class="badge bg-warning text-dark">WITHDRAW</span>
                             {% endif %}
                         </td>
                         <td class="fw-bold">{{ o.stock.ticker if o.stock else '—' }}</td>
                         <td>{{ o.quantity if o.quantity else '—' }}</td>
                         <td>{{ '$' + "%.2f"|format(o.price) if o.price else '—' }}</td>
                         <td class="fw-bold">${{ "%.2f"|format(o.totalValue) }}</td>
+                        <td>
+                            {% if o.status == 'completed' %}
+                                <span class="badge bg-success">Completed</span>
+                            {% elif o.status == 'cancelled' %}
+                                <span class="badge bg-secondary">Cancelled</span>
+                            {% elif o.status == 'pending' %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if o.status == 'pending' and o.type in ['buy', 'sell'] %}
+                                <form method="POST" action="{{ url_for('cancel_order', order_id=o.id) }}"
+                                      onsubmit="return confirm('Cancel this order?')">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Cancel</button>
+                                </form>
+                            {% endif %}
+                        </td>
                     </tr>
                     {% endfor %}
                 </tbody>
