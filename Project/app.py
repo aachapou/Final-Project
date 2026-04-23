@@ -223,6 +223,22 @@ def home():
         market_open=market_open
     )
 
+@app.route('/portfolio')
+@login_required
+def portfolio():
+    update_stock_prices()
+    holdings = (
+        Portfolio.query
+        .filter_by(customerId=current_user.id)
+        .filter(Portfolio.quantity > 0)
+        .all()
+    )
+    portfolio_value = sum(float(h.stock.currentMarketPrice) * h.quantity for h in holdings)
+    return render_template(
+        'portfolio.html',
+        holdings=holdings,
+        portfolio_value=round(portfolio_value, 2)
+    )
 
 @app.route('/deposit', methods=['GET', 'POST'])
 @login_required
