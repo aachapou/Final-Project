@@ -8,7 +8,7 @@ import random
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:13245209Red@localhost/Capstone'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://admin:13245209@capstone-final.cib6qq46ke9s.us-east-1.rds.amazonaws.com:3306/Capstone_final'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'bob'
 
