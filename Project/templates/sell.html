@@ -5,8 +5,22 @@
 <div class="card shadow-sm">
     <div class="card-body p-4">
 
-        <h5 class="mb-1">Sell Stock</h5>
-        <p class="text-muted small mb-1">Sell shares from your portfolio at the current market price.</p>
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <h5 class="mb-0">Sell Stock</h5>
+            {% if market_open %}
+                <span class="badge bg-success">● Market Open</span>
+            {% else %}
+                <span class="badge bg-danger">● Market Closed</span>
+            {% endif %}
+        </div>
+
+        {% if not market_open %}
+            <div class="alert alert-warning py-2 mt-3">
+                The market is currently closed. Your order will be queued and executed automatically when the market opens.
+            </div>
+        {% endif %}
+
+        <p class="text-muted small mb-1 mt-2">Sell shares from your portfolio at the current market price.</p>
         <p class="mb-4">Available funds: <strong>${{ "%.2f"|format(current_user.availableFunds) }}</strong></p>
 
         {% if error %}
@@ -52,7 +66,9 @@
             </div>
 
             <div class="d-flex gap-2">
-                <button type="button" class="btn btn-danger" onclick="showConfirm()">Sell</button>
+                <button type="button" class="btn btn-danger" onclick="showConfirm()">
+                    {% if market_open %}Sell{% else %}Queue Order{% endif %}
+                </button>
                 <a href="{{ url_for('portfolio') }}" class="btn btn-secondary">Cancel</a>
             </div>
         </form>
@@ -70,10 +86,17 @@
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Confirm Sale</h5>
+                <h5 class="modal-title">
+                    {% if market_open %}Confirm Sale{% else %}Confirm Queue Order{% endif %}
+                </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
+                {% if not market_open %}
+                    <div class="alert alert-warning py-2 small mb-3">
+                        Market is closed. This order will be queued and executed when market opens.
+                    </div>
+                {% endif %}
                 <p class="mb-1">Are you sure you want to sell:</p>
                 <div class="p-3 border rounded bg-light mt-2">
                     <div class="d-flex justify-content-between mb-1">
@@ -96,7 +119,9 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Go Back</button>
-                <button type="button" class="btn btn-danger" onclick="document.getElementById('sellForm').submit()">Confirm Sell</button>
+                <button type="button" class="btn btn-danger" onclick="document.getElementById('sellForm').submit()">
+                    {% if market_open %}Confirm Sell{% else %}Confirm Queue{% endif %}
+                </button>
             </div>
         </div>
     </div>

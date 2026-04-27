@@ -8,7 +8,7 @@ import random
 
 app = Flask(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://admin:13245209@capstone-final.cib6qq46ke9s.us-east-1.rds.amazonaws.com:3306/Capstone_final'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:13245209Red@localhost/Capstone'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = 'bob'
 
@@ -21,7 +21,7 @@ login_manager.login_view = 'login'
 
 
 def phoenix_now():
-    return datetime.now(timezone(timedelta(hours=-5))).replace(tzinfo=None)
+    return datetime.now(timezone(timedelta(hours=-7))).replace(tzinfo=None)
 
 
 class Customer(UserMixin, db.Model):
@@ -112,17 +112,56 @@ last_price_update = [None]
 
 def update_stock_prices():
     now = phoenix_now()
-    if last_price_update[0] and (now - last_price_update[0]).seconds < 30:
+    if last_price_update[0] and (now - last_price_update[0]).seconds < 60:
         return
     if not is_market_open():
         return
     stocks = Stock.query.all()
     for stock in stocks:
-        change = random.uniform(-0.2, 0.2)
+        change = random.uniform(-0.05, 0.05)
         new_price = round(float(stock.currentMarketPrice) * (1 + change), 2)
         stock.currentMarketPrice = max(new_price, 0.01)
     db.session.commit()
     last_price_update[0] = now
+
+
+def process_pending_orders():
+    if not is_market_open():
+        return
+
+    pending = OrderHistory.query.filter_by(status='pending').all()
+
+    for order in pending:
+        customer = Customer.query.get(order.customerId)
+        stock = Stock.query.get(order.stockId)
+
+        if not customer or not stock:
+            continue
+
+        if order.type == 'buy':
+            holding = Portfolio.query.filter_by(
+                customerId=order.customerId, stockId=order.stockId
+            ).first()
+            if holding:
+                holding.quantity += order.quantity
+            else:
+                db.session.add(Portfolio(
+                    customerId=order.customerId,
+                    stockId=order.stockId,
+                    quantity=order.quantity
+                ))
+            order.price = float(stock.currentMarketPrice)
+            order.totalValue = round(float(stock.currentMarketPrice) * order.quantity, 2)
+            order.status = 'completed'
+
+        elif order.type == 'sell':
+            total = round(float(stock.currentMarketPrice) * order.quantity, 2)
+            customer.availableFunds = round(float(customer.availableFunds) + total, 2)
+            order.price = float(stock.currentMarketPrice)
+            order.totalValue = total
+            order.status = 'completed'
+
+    db.session.commit()
 
 
 @login_manager.user_loader
@@ -201,6 +240,7 @@ def logout():
 @login_required
 def home():
     update_stock_prices()
+    process_pending_orders()
     holdings = (
         Portfolio.query
         .filter_by(customerId=current_user.id)
@@ -284,12 +324,9 @@ def withdraw():
 @login_required
 def buy():
     update_stock_prices()
+    process_pending_orders()
     stocks = Stock.query.filter(Stock.quantity > 0).order_by(Stock.ticker).all()
     error = None
-
-    if not is_market_open():
-        error = 'Market is currently closed. Trading is not allowed right now.'
-        return render_template('buy.html', stocks=stocks, error=error)
 
     if request.method == 'POST':
         stock_id = request.form.get('stock_id')
@@ -314,39 +351,51 @@ def buy():
                 current_user.availableFunds = round(float(current_user.availableFunds) - total, 2)
                 stock.quantity -= quantity
 
-                holding = Portfolio.query.filter_by(
-                    customerId=current_user.id, stockId=stock.id
-                ).first()
-
-                if holding:
-                    holding.quantity += quantity
-                else:
-                    db.session.add(Portfolio(
+                if is_market_open():
+                    holding = Portfolio.query.filter_by(
+                        customerId=current_user.id, stockId=stock.id
+                    ).first()
+                    if holding:
+                        holding.quantity += quantity
+                    else:
+                        db.session.add(Portfolio(
+                            customerId=current_user.id,
+                            stockId=stock.id,
+                            quantity=quantity
+                        ))
+                    db.session.add(OrderHistory(
                         customerId=current_user.id,
                         stockId=stock.id,
-                        quantity=quantity
+                        type='buy',
+                        quantity=quantity,
+                        price=float(stock.currentMarketPrice),
+                        totalValue=total,
+                        status='completed'
                     ))
+                    db.session.commit()
+                    flash(f'Bought {quantity} share(s) of {stock.ticker} for ${total:.2f}.', 'success')
+                else:
+                    db.session.add(OrderHistory(
+                        customerId=current_user.id,
+                        stockId=stock.id,
+                        type='buy',
+                        quantity=quantity,
+                        price=float(stock.currentMarketPrice),
+                        totalValue=total,
+                        status='pending'
+                    ))
+                    db.session.commit()
+                    flash(f'Market is closed. Buy order for {quantity} share(s) of {stock.ticker} queued and will execute when market opens.', 'warning')
 
-                db.session.add(OrderHistory(
-                    customerId=current_user.id,
-                    stockId=stock.id,
-                    type='buy',
-                    quantity=quantity,
-                    price=float(stock.currentMarketPrice),
-                    totalValue=total,
-                    status='completed'
-                ))
-
-                db.session.commit()
-                flash(f'Bought {quantity} share(s) of {stock.ticker} for ${total:.2f}.', 'success')
                 return redirect(url_for('buy'))
 
-    return render_template('buy.html', stocks=stocks, error=error)
+    return render_template('buy.html', stocks=stocks, error=error, market_open=is_market_open())
 
 
 @app.route('/sell', methods=['GET', 'POST'])
 @login_required
 def sell():
+    process_pending_orders()
     holdings = (
         Portfolio.query
         .filter_by(customerId=current_user.id)
@@ -354,10 +403,6 @@ def sell():
         .all()
     )
     error = None
-
-    if not is_market_open():
-        error = 'Market is currently closed. Trading is not allowed right now.'
-        return render_template('sell.html', holdings=holdings, error=error)
 
     if request.method == 'POST':
         portfolio_id = request.form.get('portfolio_id')
@@ -375,26 +420,39 @@ def sell():
         elif quantity > holding.quantity:
             error = f'You only own {holding.quantity} share(s) of {holding.stock.ticker}.'
         else:
-            total = round(float(holding.stock.currentMarketPrice) * quantity, 2)
-            current_user.availableFunds = round(float(current_user.availableFunds) + total, 2)
-            holding.stock.quantity += quantity
             holding.quantity -= quantity
+            holding.stock.quantity += quantity
 
-            db.session.add(OrderHistory(
-                customerId=current_user.id,
-                stockId=holding.stockId,
-                type='sell',
-                quantity=quantity,
-                price=float(holding.stock.currentMarketPrice),
-                totalValue=total,
-                status='completed'
-            ))
+            if is_market_open():
+                total = round(float(holding.stock.currentMarketPrice) * quantity, 2)
+                current_user.availableFunds = round(float(current_user.availableFunds) + total, 2)
+                db.session.add(OrderHistory(
+                    customerId=current_user.id,
+                    stockId=holding.stockId,
+                    type='sell',
+                    quantity=quantity,
+                    price=float(holding.stock.currentMarketPrice),
+                    totalValue=total,
+                    status='completed'
+                ))
+                db.session.commit()
+                flash(f'Sold {quantity} share(s) of {holding.stock.ticker} for ${total:.2f}.', 'success')
+            else:
+                db.session.add(OrderHistory(
+                    customerId=current_user.id,
+                    stockId=holding.stockId,
+                    type='sell',
+                    quantity=quantity,
+                    price=float(holding.stock.currentMarketPrice),
+                    totalValue=0,
+                    status='pending'
+                ))
+                db.session.commit()
+                flash(f'Market is closed. Sell order for {quantity} share(s) of {holding.stock.ticker} queued and will execute when market opens.', 'warning')
 
-            db.session.commit()
-            flash(f'Sold {quantity} share(s) of {holding.stock.ticker} for ${total:.2f}.', 'success')
             return redirect(url_for('sell'))
 
-    return render_template('sell.html', holdings=holdings, error=error)
+    return render_template('sell.html', holdings=holdings, error=error, market_open=is_market_open())
 
 
 @app.route('/cancel_order/<int:order_id>', methods=['POST'])
